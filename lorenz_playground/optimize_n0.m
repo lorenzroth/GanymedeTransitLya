@@ -10,7 +10,7 @@ addpath("../utility_files")
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 which_observation = 3010;
-music_intretainment = false;
+music_intretainment = true;
 
 
 % OBSERVATION oe9z03010
@@ -38,16 +38,18 @@ end
 
 min_poly_order = 3;
 max_poly_order = 3;
-min_n0         = 2000;
-max_n0         = 8000;
+min_n0         = 0000;
+max_n0         = 10000;
 n0_step        = 100;
+
+thickness_annulus = 6; 
 
 
 % EASTER EGG TO BE REMOVED
 % type :> clear sound         if you want to stop it 
 
 if music_intretainment 
-   [y,Fs] = audioread('german-national-anthem.mp3');
+   [y,Fs] = audioread('STAY_JustinBieber.mp3');
    sound(y,Fs)
 end
 
@@ -284,17 +286,16 @@ if proceed_check =='y'
                        
        
             %% GENERATE RADIAL PLOTS
-    
-            thikness_anulus = 1;
+   
             if counter ==1
                 ganymede_centred_subimage_vertical_box_plot   = generate_vertical_rectangle_plot(ganymede_centred_subimage_rayleigh,x_index_center_ganymede_centred_subimage,diameter_ganymede);
                 ganymede_centred_subimage_horizontal_box_plot = generate_horizontal_rectangle_plot(ganymede_centred_subimage_rayleigh,y_index_center_ganymede_centred_subimage,diameter_ganymede);
-                [ganymede_centred_subimage_radial_plot,~]     = generate_radial_plot(ganymede_centred_subimage_rayleigh,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thikness_anulus);
+                [ganymede_centred_subimage_radial_plot,~]     = generate_radial_plot(ganymede_centred_subimage_rayleigh,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thickness_annulus);
             end
     
             [model_image_vertical_box_plot,error_bar_vertical_box_plot]     = generate_vertical_rectangle_plot(final_model_image_PSF,x_index_center_ganymede_centred_subimage,diameter_ganymede,sigma_matrix_ganymede_centred_subimage_rayleigh );
             [model_image_horizontal_box_plot,error_bar_horizontal_box_plot] = generate_horizontal_rectangle_plot(final_model_image_PSF,y_index_center_ganymede_centred_subimage,diameter_ganymede,sigma_matrix_ganymede_centred_subimage_rayleigh );
-            [model_image_radial_plot,radial_range,error_bar_radial_plot]    = generate_radial_plot(final_model_image_PSF,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thikness_anulus,sigma_matrix_ganymede_centred_subimage_rayleigh );
+            [model_image_radial_plot,radial_range,error_bar_radial_plot]    = generate_radial_plot(final_model_image_PSF,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thickness_annulus,sigma_matrix_ganymede_centred_subimage_rayleigh );
             
             chi2_rad(counter)     = sum((model_image_radial_plot         - ganymede_centred_subimage_radial_plot        ).^2./error_bar_radial_plot.^2  )/numel(model_image_radial_plot);
             chi2_vert(counter)    = sum((model_image_vertical_box_plot   - ganymede_centred_subimage_vertical_box_plot  ).^2./error_bar_vertical_box_plot.^2  )/numel(model_image_vertical_box_plot  );
