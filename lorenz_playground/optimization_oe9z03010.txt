@@ -1,0 +1,9 @@
+----------------------------------------
+Column Density Optimization Results
+----------------------------------------
+Observation ID : ./oe9z03011_flt.fits
+----------------------------------------
+Polynomial surface order : 3
+radial     cut  Chi2 -> 0.6542 | optimal colum density [1/cm3] -> 4600.00
+vertical   cut  Chi2 -> 0.5614 | optimal colum density [1/cm3] -> 6900.00
+horizontal cut  Chi2 -> 0.7058 | optimal colum density [1/cm3] -> 5800.00
