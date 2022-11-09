@@ -8,40 +8,44 @@ addpath("../utility_files")
 
 panel_figure = figure("Position",[1,1,600,800]);
 counter             = 1;
+run("loadParametersAnalysis.m") % load parameters
 
-
-for ID=[3010,4010]
+for ID=[4011,3011]
    which_observation = ID;
 
 if which_observation == 3010
-    observation.file = "./oe9z03011_flt.fits";
-    observation.name      = 'oe9z03010';
-    observation.x_pcenter  = 166;       % pixels
-    observation.y_pcenter  = 349;       % pixels
-    %observation.poly_order = 2;
-    %observation.best_n0    = 5020;       % 1/cm^2
-    observation.poly_order = 3;
-    observation.best_n0    = 4600;      % 1/cm^2
-  observation.zc        = 4.95e-14 ;
-    obseravtion.g_factor  = 7.3e-14;
-    observation.poly_order = 3;
-    observation.north_pole_angle_direction = 27.0; %deg defined anti-clockwise from horizonatal axis
+    observation = observation3010;
 
 elseif which_observation == 4010
-    observation.file = "./oe9z04011_flt.fits";
-    observation.name = 'oe9z04010';
-    observation.x_pcenter  = 158;       % pixels
-    observation.y_pcenter  = 361;       % pixels
-    %observation.poly_order = 2;
-    %observation.best_n0    = 5130;      % 1/cm^2
-    observation.poly_order = 3;
-    observation.best_n0    = 5500;      % 1/cm^2
-    observation.zc        = 4.95e-14 ;
-    obseravtion.g_factor  = 7.3e-14;
-    observation.north_pole_angle_direction = 24.4; %deg defined anti-clockwise from horizonatal axis
+    observation = observation4010;
+
+elseif which_observation == 3011
+    observation = observation3011;
+
+elseif which_observation == 4011
+    observation = observation4011;
+
 else
-    error("uknown obseravton")
+    error("uknown observation")
 end
+
+
+if which_observation == 3010
+    observation = observation3010;
+
+elseif which_observation == 4010
+    observation = observation4010;
+
+elseif which_observation == 3011
+    observation = observation3011;
+
+elseif which_observation == 4011
+    observation = observation4011;
+
+else
+    error("uknown observation")
+end
+
 
 observations_dir   = "../ganymede_observations";
 filename           = observation.file;
@@ -86,7 +90,6 @@ y_pixel_range_ganymede_centred_subimage     = y_pixel_range_full_image(y_pixel_r
 %% CENTER DEFINITION
 
 % floor(diameter/2) and center by eye (referenced to the full image)
-diameter_ganymede    = 70.373;   % define floor(diameter_ganymede/2) so that diameter_ganymede is an odd number (makes easy to have a center than)
 x_pixel_center       = observation.x_pcenter ;      % define center of the image by eye on the big image
 y_pixel_center       = observation.y_pcenter ;    % define center of the image by eye on the big image
 box_radial_extension = 1.5;      % box around the ganymede to be eliminated 
@@ -98,16 +101,13 @@ y_index_center_ganymede_centred_subimage = find(y_pixel_range_ganymede_centred_s
 %% CONVERSION FROM COUNTS TO REYLIGHTS
 
 exposition_time =  GanymedeImage.find_key("TEXPTIME"); %s
-mx              =  0.0246;     % field of view x dierction [arsec]
-my              =  0.0246;     % field of view y dierction [arsec]
-A_mirror        =  45238.9342; % cm2
 
 filter_data   = dlmread("HST_STIS_FUV.25MAMA_G140L.dat");
 wavelength    = filter_data(:,1);
 throughput    = filter_data(:,2);
 throughput_Ly = interp1(wavelength,throughput,1216);
-A_eff         = A_mirror*throughput_Ly;
-Omega         = mx*my*(2*pi/3600/360)^2;
+A_eff         = globalParameters.A_mirror*throughput_Ly;
+Omega         = globalParameters.mx*globalParameters.my*(2*pi/3600/360)^2;
 
 count2KRayleight = 4*pi/10^6/(exposition_time*Omega*A_eff)*10^-3;
 ganymede_centred_subimage_reyleights = ganymede_centred_subimage*count2KRayleight;
@@ -116,7 +116,7 @@ sigma_matrix_ganymede_centred_subimage_reyleights = sigma_matrix_ganymede_centre
 
 %% FIT THE MODEL
 % assumed ganymede brightness
-ganymede_assumed_brightness = 1.3; % KReyleights
+globalParameters.ganymede_assumed_brightness = 1.3; % KReyleights
 
 % decide max order for background polynomial surface
 poly_order = observation.poly_order;
@@ -133,16 +133,15 @@ for ii=0:poly_order
 end
 
 zc        = observation.zc;
-Rg        = 2643.1e5;
-R_ganymede_pixel  = diameter_ganymede/2;
+R_ganymede_pixel  = globalParameters.diameter_ganymede/2;
 
  % H corona absorbtion model outside ganymede disk
-Nh  = n0*Rg*(R_ganymede_pixel./sqrt(x.^2+y.^2)).*pi;
+Nh  = n0*globalParameters.RGanymedeCm *(R_ganymede_pixel./sqrt(x.^2+y.^2)).*pi;
 tau = zc*Nh;
 T   = exp(-tau);
 
 % H corona emission model outside ganymede disk
-g_factor  = obseravtion.g_factor; %[kR/cm2]
+g_factor  = observation.g_factor; %[kR/cm2]
 I_H_corona_emission = Nh*g_factor;
 
 % Define point spread function
@@ -175,7 +174,7 @@ ganymede_mask_for_ganymede_centred_subimage = sqrt(X_gird_ganymede_centred_subim
 ganymede_mask_for_model_image            = sqrt(X_grid_model.^2 + Y_grid_model.^2) < R_ganymede_pixel;   % this the mask covering the ganymede in the expanded image
 
 mean_brightness_ganymede = mean(mean(ganymede_centred_subimage_reyleights(brightness_mask)));
-IPMandGEO                = mean_brightness_ganymede - ganymede_assumed_brightness;
+IPMandGEO                = mean_brightness_ganymede - globalParameters.ganymede_assumed_brightness;
 IPMandGEO_counts         = IPMandGEO/count2KRayleight;
 
 % adjust sigma values
@@ -250,30 +249,94 @@ for n0_value=[0,observation.best_n0]
     %% GENERATE RADIAL PLOTS
     
     if counter2 ==1 
-      ganymede_centred_subimage_vertical_box_plot   = generate_vertical_rectangle_plot(ganymede_centred_subimage_reyleights,x_index_center_ganymede_centred_subimage,diameter_ganymede);
-      ganymede_centred_subimage_horizontal_box_plot = generate_horizontal_rectangle_plot(ganymede_centred_subimage_reyleights,y_index_center_ganymede_centred_subimage,diameter_ganymede);
-      [ganymede_centred_subimage_radial_plot,~]     = generate_radial_plot(ganymede_centred_subimage_reyleights,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thickness_annulus);
-    
-      bkg_vertical_box_plot    = generate_vertical_rectangle_plot(bkg_only_model_image,x_index_center_ganymede_centred_subimage,diameter_ganymede);
-      bkg_horizontal_box_plot  = generate_horizontal_rectangle_plot(bkg_only_model_image,y_index_center_ganymede_centred_subimage,diameter_ganymede);
-      [bkg_radial_plot,~]      = generate_radial_plot(bkg_only_model_image,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thickness_annulus );
+
+      [ganymede_centred_subimage_vertical_box_plot,~]   = generate_vertical_rectangle_plot(ganymede_centred_subimage_reyleights,...
+                                                                                            x_index_center_ganymede_centred_subimage,...
+                                                                                            y_index_center_ganymede_centred_subimage,...
+                                                                                            globalParameters.diameter_ganymede);
+  
+      [ganymede_centred_subimage_horizontal_box_plot,~] = generate_horizontal_rectangle_plot(ganymede_centred_subimage_reyleights,...
+                                                                                             x_index_center_ganymede_centred_subimage,...
+                                                                                             y_index_center_ganymede_centred_subimage,...
+                                                                                             globalParameters.diameter_ganymede);
+  
+      [ganymede_centred_subimage_radial_plot,~]         = generate_radial_plot(ganymede_centred_subimage_reyleights,...
+                                                                               x_index_center_ganymede_centred_subimage,...
+                                                                               y_index_center_ganymede_centred_subimage,...
+                                                                               R_ganymede_pixel*2.5,...
+                                                                               globalParameters.thickness_annulus);
+
+      [bkg_vertical_box_plot,~]   = generate_vertical_rectangle_plot(bkg_only_model_image, ...
+                                                                     x_index_center_ganymede_centred_subimage,...
+                                                                     y_index_center_ganymede_centred_subimage,...
+                                                                     globalParameters.diameter_ganymede);
+  
+      [bkg_horizontal_box_plot,~] = generate_horizontal_rectangle_plot(bkg_only_model_image,...
+                                                                       x_index_center_ganymede_centred_subimage,...
+                                                                       y_index_center_ganymede_centred_subimage,...
+                                                                       globalParameters.diameter_ganymede);
+  
+        
+      [bkg_radial_plot,~]         = generate_radial_plot(bkg_only_model_image,...
+                                                         x_index_center_ganymede_centred_subimage,...
+                                                         y_index_center_ganymede_centred_subimage,...
+                                                         R_ganymede_pixel*2.5,globalParameters.thickness_annulus );
 
     end
     
-    [model_image_vertical_box_plot,error_bar_vertical_box_plot]     = generate_vertical_rectangle_plot(final_model_image_PSF,x_index_center_ganymede_centred_subimage,diameter_ganymede,sigma_matrix_ganymede_centred_subimage_reyleight );
-    [model_image_horizontal_box_plot,error_bar_horizontal_box_plot] = generate_horizontal_rectangle_plot(final_model_image_PSF,y_index_center_ganymede_centred_subimage,diameter_ganymede,sigma_matrix_ganymede_centred_subimage_reyleight );
-    [model_image_radial_plot,radial_range,error_bar_radial_plot]    = generate_radial_plot(final_model_image_PSF,x_index_center_ganymede_centred_subimage,y_index_center_ganymede_centred_subimage,R_ganymede_pixel*2.5,thickness_annulus,sigma_matrix_ganymede_centred_subimage_reyleight );
+    [model_image_vertical_box_plot,vertical_range,error_bar_vertical_box_plot]   = generate_vertical_rectangle_plot(final_model_image_PSF,...
+                                                                                                                     x_index_center_ganymede_centred_subimage,...
+                                                                                                                     y_index_center_ganymede_centred_subimage,...
+                                                                                                                     globalParameters.diameter_ganymede,...
+                                                                                                                     sigma_matrix_ganymede_centred_subimage_reyleight );
+
+    [model_image_horizontal_box_plot,horizontal_range,error_bar_horizontal_box_plot] = generate_horizontal_rectangle_plot(final_model_image_PSF,...
+                                                                                                                           x_index_center_ganymede_centred_subimage,...
+                                                                                                                           y_index_center_ganymede_centred_subimage,...
+                                                                                                                           globalParameters.diameter_ganymede,...
+                                                                                                                           sigma_matrix_ganymede_centred_subimage_reyleight );
+    [model_image_radial_plot,radial_range,error_bar_radial_plot]  = generate_radial_plot(final_model_image_PSF,...
+                                                                                         x_index_center_ganymede_centred_subimage,...
+                                                                                         y_index_center_ganymede_centred_subimage,...
+                                                                                         R_ganymede_pixel*2.5,...
+                                                                                         globalParameters.thickness_annulus,...
+                                                                                         sigma_matrix_ganymede_centred_subimage_reyleight );
     
-    chi2_rad     = sum((model_image_radial_plot         - ganymede_centred_subimage_radial_plot        ).^2./error_bar_radial_plot.^2  )/numel(model_image_radial_plot);
-    chi2_vert    = sum((model_image_vertical_box_plot   - ganymede_centred_subimage_vertical_box_plot  ).^2./error_bar_vertical_box_plot.^2  )/numel(model_image_vertical_box_plot  );
-    chi2_hor     = sum((model_image_horizontal_box_plot - ganymede_centred_subimage_horizontal_box_plot).^2./error_bar_horizontal_box_plot.^2 )/numel(model_image_horizontal_box_plot );
+
+
+     % exclude disk points mask 
+    vert_mask_nodik = vertical_range<= -R_ganymede_pixel | vertical_range >= R_ganymede_pixel ;
+    hor_mask_nodik =  horizontal_range<= -R_ganymede_pixel | horizontal_range >= R_ganymede_pixel ;
+    rad_mask_nodisk = radial_range >= R_ganymede_pixel;
+
+    ganymede_centred_subimage_vertical_box_plot_nodisk   = ganymede_centred_subimage_vertical_box_plot(vert_mask_nodik);
+    ganymede_centred_subimage_horizontal_box_plot_nodisk = ganymede_centred_subimage_horizontal_box_plot(hor_mask_nodik);
+    ganymede_centred_subimage_radial_plot_nodisk         = ganymede_centred_subimage_radial_plot(rad_mask_nodisk);
+    
+    model_image_vertical_box_plot_nodisk   = model_image_vertical_box_plot(vert_mask_nodik);
+    model_image_horizontal_box_plot_nodisk = model_image_horizontal_box_plot(hor_mask_nodik);
+    model_image_radial_plot_nodisk         = model_image_radial_plot(rad_mask_nodisk);
+    
+    error_bar_vertical_box_plot_nodisk   = error_bar_vertical_box_plot(vert_mask_nodik);
+    error_bar_horizontal_box_plot_nodisk = error_bar_horizontal_box_plot(hor_mask_nodik);
+    error_bar_radial_plot_nodisk     = error_bar_radial_plot(rad_mask_nodisk);
+
+    vertical_range_nodisk   = vertical_range(vert_mask_nodik);
+    horizontal_range_nodisk = horizontal_range(hor_mask_nodik);
+    radial_range_nodisk     = radial_range(rad_mask_nodisk);
+    
+    % Chi2 per image : radial, vertical and horizontal
+    chi2_rad     = sum((model_image_radial_plot_nodisk         - ganymede_centred_subimage_radial_plot_nodisk        ).^2./error_bar_radial_plot_nodisk.^2  )/numel(model_image_radial_plot_nodisk);
+    chi2_vert    = sum((model_image_vertical_box_plot_nodisk   - ganymede_centred_subimage_vertical_box_plot_nodisk  ).^2./error_bar_vertical_box_plot_nodisk.^2  )/numel(model_image_vertical_box_plot_nodisk  );
+    chi2_hor     = sum((model_image_horizontal_box_plot_nodisk - ganymede_centred_subimage_horizontal_box_plot_nodisk).^2./error_bar_horizontal_box_plot_nodisk.^2 )/numel(model_image_horizontal_box_plot_nodisk );
+    
     
     
     if counter2 == 1
        boxing_ax1 = formal_axes(subplot(3,3,counter));
        hold on
-       plot(boxing_ax1,(y_pixel_range_ganymede_centred_subimage-y_pixel_center)/R_ganymede_pixel,ganymede_centred_subimage_vertical_box_plot,"DisplayName","STIS observation")
-       plot(boxing_ax1,(y_pixel_range_ganymede_centred_subimage-y_pixel_center)/R_ganymede_pixel,bkg_vertical_box_plot,"color","k","linestyle",line_style_model_only,"DisplayName","only background")
+       plot(boxing_ax1,vertical_range/R_ganymede_pixel,ganymede_centred_subimage_vertical_box_plot,"DisplayName","STIS observation")
+       plot(boxing_ax1,vertical_range/R_ganymede_pixel,bkg_vertical_box_plot,"color","k","linestyle",line_style_model_only,"DisplayName","only background")
        shaded_error_bar((y_pixel_range_ganymede_centred_subimage-y_pixel_center)/R_ganymede_pixel,ganymede_centred_subimage_vertical_box_plot,error_bar_vertical_box_plot,Alpha=shaded_error_alphas,Color=error_bar_color)
        boxing_ax1.XLabel.String = "y-direction [R_{G}]";
        boxing_ax1.YLabel.String = "Brightness  [kR]";
@@ -287,8 +350,8 @@ fontsize(gca,scale=1.5)
     if counter2 == 1
        boxing_ax2 = formal_axes(subplot(3,3,counter+3));
        hold on
-       plot(boxing_ax2,(x_pixel_range_ganymede_centred_subimage-x_pixel_center)/R_ganymede_pixel,ganymede_centred_subimage_horizontal_box_plot,"DisplayName","STIS observation")
-       plot(boxing_ax2,(x_pixel_range_ganymede_centred_subimage-x_pixel_center)/R_ganymede_pixel,bkg_horizontal_box_plot,"color","k","linestyle",line_style_model_only,"DisplayName","only background")
+       plot(boxing_ax2,horizontal_range/R_ganymede_pixel,ganymede_centred_subimage_horizontal_box_plot,"DisplayName","STIS observation")
+       plot(boxing_ax2,horizontal_range/R_ganymede_pixel,bkg_horizontal_box_plot,"color","k","linestyle",line_style_model_only,"DisplayName","only background")
        shaded_error_bar((x_pixel_range_ganymede_centred_subimage-x_pixel_center)/R_ganymede_pixel,ganymede_centred_subimage_horizontal_box_plot,error_bar_horizontal_box_plot,Alpha=shaded_error_alphas,Color=error_bar_color)
        boxing_ax2.XLabel.String = "x-direction [R_G]";
        boxing_ax2.YLabel.String = "Brightness  [kR]";
@@ -316,6 +379,7 @@ fontsize(gca,scale=1.5)
 
 end
 counter = counter +1;
+
 end
 %%
 xcorner = [x_pixel_range_ganymede_centred_subimage(1),x_pixel_range_ganymede_centred_subimage(end)];
@@ -325,7 +389,7 @@ ax = formal_axes(subplot(3,3,3));
 hold on
 %colormap gray
 imagesc(xcorner,ycorner,final_model_image_PSF);
-xvertces_vertical_box = [x_pixel_center-diameter_ganymede/2,x_pixel_center-diameter_ganymede/2,x_pixel_center+diameter_ganymede/2,x_pixel_center+diameter_ganymede/2];
+xvertces_vertical_box = [x_pixel_center-globalParameters.diameter_ganymede/2,x_pixel_center-globalParameters.diameter_ganymede/2,x_pixel_center+globalParameters.diameter_ganymede/2,x_pixel_center+globalParameters.diameter_ganymede/2];
 yvertces_vertical_box = [y_pixel_range_ganymede_centred_subimage(1),y_pixel_range_ganymede_centred_subimage(end),y_pixel_range_ganymede_centred_subimage(end),y_pixel_range_ganymede_centred_subimage(1)];
 fill(xvertces_vertical_box,yvertces_vertical_box,"r",FaceAlpha=0.3)
   axis square;
@@ -338,7 +402,7 @@ fontsize(gca,scale=1.5)
 ax = formal_axes(subplot(3,3,6));
 hold on
 imagesc(xcorner,ycorner,final_model_image_PSF);
-yvertces_vertical_box = [y_pixel_center-diameter_ganymede/2,y_pixel_center-diameter_ganymede/2,y_pixel_center+diameter_ganymede/2,y_pixel_center+diameter_ganymede/2];
+yvertces_vertical_box = [y_pixel_center-globalParameters.diameter_ganymede/2,y_pixel_center-globalParameters.diameter_ganymede/2,y_pixel_center+globalParameters.diameter_ganymede/2,y_pixel_center+globalParameters.diameter_ganymede/2];
 xvertces_vertical_box = [x_pixel_range_ganymede_centred_subimage(1),x_pixel_range_ganymede_centred_subimage(end),x_pixel_range_ganymede_centred_subimage(end),x_pixel_range_ganymede_centred_subimage(1)];
 fill(xvertces_vertical_box,yvertces_vertical_box,"r",FaceAlpha=0.3)
   axis square;
@@ -354,8 +418,8 @@ hold on
 imagesc(xcorner,ycorner,final_model_image_PSF,cscale);
 
 theta = linspace(0,2*pi,100);
-yvertces_vertical_box = y_pixel_center+diameter_ganymede/2*2.3*cos(theta);
-xvertces_vertical_box = x_pixel_center+diameter_ganymede/2*2.3*sin(theta);
+yvertces_vertical_box = y_pixel_center+globalParameters.diameter_ganymede/2*2.3*cos(theta);
+xvertces_vertical_box = x_pixel_center+globalParameters.diameter_ganymede/2*2.3*sin(theta);
 %fill(xvertces_vertical_box,yvertces_vertical_box,"r",FaceAlpha=0.3,EdgeColor="non")
   axis square;
 ax.XLim = [xcorner(1),xcorner(end)];

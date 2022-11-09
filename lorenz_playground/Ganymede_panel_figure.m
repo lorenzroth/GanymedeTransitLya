@@ -4,6 +4,7 @@ clear all;
 addpath("../src")
 addpath("../utility_files") 
 addpath("../ganymede_observations");
+run("loadParametersAnalysis.m") % load parameters
 
 
 panel_figure = figure("Units","inches","Position",[1,1,10,8]);
@@ -11,26 +12,22 @@ counter = 1;
 
 for observation_ID= [3010,4010]
 
-    if  observation_ID == 3010
-        observation.file = "oe9z03011_flt.fits";
-        observation.name = "oe9z03010";
-        observation.x_pcenter = 166; % for 1356 aurora test:+233;
-        observation.y_pcenter = 349;
-        observation.poly_order = 3;
-        observation.north_pole_angle_direction = 27.0; %deg defined (ANTI- ??!)clockwise from horizonatal axis
-        observation.max_rayl = 10;    
-        observation.min_rayl = 4;        % IPM and GEO background as minimum
-    elseif  observation_ID == 4010
-        observation.file = "oe9z04011_flt.fits";
-        observation.name = "oe9z04010";
-        observation.x_pcenter = 158; % for 1356 aurora test: +233;
-        observation.y_pcenter = 361;
-        observation.poly_order = 3;
-        observation.north_pole_angle_direction = 24.4;
-        observation.max_rayl = 13;
-        observation.min_rayl = 4;        % IPM and GEO background as minimum
+    which_observation = observation_ID;
+
+    if which_observation == 3010
+    observation = observation3010;
+
+    elseif which_observation == 4010
+        observation = observation4010;
+    
+    elseif which_observation == 3011
+        observation = observation3011;
+    
+    elseif which_observation == 4011
+        observation = observation4011;
+    
     else
-        error("uknown obseravton")
+        error("uknown obseravtion")
     end
 
     observations_dir   = "../ganymede_observations";
@@ -100,7 +97,6 @@ for observation_ID= [3010,4010]
 
     %% CENTER DEFINITION
 
-    diameter_ganymede    = 70.373;  % from computation using earth distance form Ganymede at given date and from Hubble Detector pixel angular resolution
     x_pixel_center       = observation.x_pcenter ;   
     y_pixel_center       = observation.y_pcenter ;   
     box_radial_extension = 1.5;      % box around the ganymede to be eliminated
@@ -112,16 +108,13 @@ for observation_ID= [3010,4010]
     %% CONVERSION FROM COUNTS TO REYLIGHTS
 
     exposition_time =  GanymedeImage.find_key("TEXPTIME"); %s
-    mx              =  0.0246;     % field of view x dierction [arsec]
-    my              =  0.0246;     % field of view y dierction [arsec]
-    A_mirror        =  45238.9342; % cm2
 
     filter_data   = dlmread("HST_STIS_FUV.25MAMA_G140L.dat");
     wavelength    = filter_data(:,1);
     throughput    = filter_data(:,2);
     throughput_Ly = interp1(wavelength,throughput,1216);
-    A_eff         = A_mirror*throughput_Ly;
-    Omega         = mx*my*(2*pi/3600/360)^2;
+    A_eff         = globalParameters.A_mirror*throughput_Ly;
+    Omega         = globalParameters.mx*globalParameters.my*(2*pi/3600/360)^2;
 
     count2KRayleight = 4*pi/10^6/(exposition_time*Omega*A_eff)*10^-3;
     ganymede_centred_subimage_reyleights = ganymede_centred_subimage*count2KRayleight;
@@ -134,7 +127,7 @@ for observation_ID= [3010,4010]
     max_intensity            = max(max(ganymede_centred_subimage_reyleights)); % define max intensity
     %cscale                   = [0,max_intensity];
     %cscale                   = [0,0.5]; for 1356 aurora test
-    cscale                   = [4,observation.max_rayl];
+    cscale                   = [4,10];
 
     ax   = subplot(2,2,counter+2);
     imagesc(ax,xcorner,ycorner,ganymede_centred_subimage_reyleights,cscale);
@@ -159,7 +152,7 @@ for observation_ID= [3010,4010]
     color_bar_instance.Ticks = 0:2:30;
     %clim([0 25]);
 
-    draw_circle([observation.x_pcenter,observation.y_pcenter],diameter_ganymede/2,ax)
+    draw_circle([observation.x_pcenter,observation.y_pcenter],globalParameters.diameter_ganymede/2,ax)
     
     counter = counter+1;
 

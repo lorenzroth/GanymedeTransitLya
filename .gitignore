@@ -1,0 +1,7 @@
+#ignore useless files
+
+# folders
+resources/
+
+# files
+%.asv
