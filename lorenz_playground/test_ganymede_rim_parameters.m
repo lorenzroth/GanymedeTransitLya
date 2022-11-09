@@ -1,6 +1,7 @@
 close all;
 clear all;
 addpath("../src")
+addpath("../utility_files")
 run("loadParametersAnalysis.m") % load parameters
 
 which_observation = 3010;

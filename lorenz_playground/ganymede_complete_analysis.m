@@ -12,7 +12,7 @@ addpath("../utility_files")
 
 run("loadParametersAnalysis.m") % load parameters
 
-which_observation = 4010; % DEFINE THE OBSERVATION THAT YOU WANT TO SEE
+which_observation = 4011; % DEFINE THE OBSERVATION THAT YOU WANT TO SEE
 
 if which_observation == 3010
     observation = observation3010;

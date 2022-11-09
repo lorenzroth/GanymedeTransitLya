@@ -9,7 +9,7 @@ addpath("../utility_files")
 % MAIN USER DEFINED SECTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-which_observation = 3010;
+which_observation = 3011;
 music_intretainment = false;
 run("loadParametersAnalysis.m") % load parameters
 
@@ -37,7 +37,7 @@ min_poly_order = 3;
 max_poly_order = 3;
 min_n0         = 0000;
 max_n0         = 10000;
-n0_step        = 100;
+n0_step        = 50;
 
 
 

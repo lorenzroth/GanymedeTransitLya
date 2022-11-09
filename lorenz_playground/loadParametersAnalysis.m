@@ -6,7 +6,7 @@
 globalParameters = struct;
 
 globalParameters.diameter_ganymede               = 70.373;
-globalParameters.thickness_annulus               = 3;          % [pixels] thickness annulus for radial brightness plot
+globalParameters.thickness_annulus               = 4.5;          % [pixels] thickness annulus for radial brightness plot
 globalParameters.mx                              = 0.0246;     % field of view x dierction [arsec]
 globalParameters.my                              = 0.0246;     % field of view y dierction [arsec]
 globalParameters.A_mirror                        = 45238.9342; % [cm2] mirror HST

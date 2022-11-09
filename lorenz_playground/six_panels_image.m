@@ -10,7 +10,7 @@ panel_figure = figure("Position",[1,1,600,800]);
 counter             = 1;
 run("loadParametersAnalysis.m") % load parameters
 
-for ID=[4011,3011]
+for ID=[3011,4011]
    which_observation = ID;
 
 if which_observation == 3010
