@@ -48,6 +48,8 @@ filename           = observation.file;
 output_dir         = "../images";
 output_dir_models  = "../images/models";
 
+thickness_annulus = 3; % in pixels 
+
 % extract fits data
 GanymedeImage = FitsImageObject;
 GanymedeImage.read_image(fullfile(observations_dir,filename));
@@ -247,7 +249,6 @@ for n0_value=[0,observation.best_n0]
     
     %% GENERATE RADIAL PLOTS
     
-    thickness_annulus = 5; % in pixels 
     if counter2 ==1 
       ganymede_centred_subimage_vertical_box_plot   = generate_vertical_rectangle_plot(ganymede_centred_subimage_reyleights,x_index_center_ganymede_centred_subimage,diameter_ganymede);
       ganymede_centred_subimage_horizontal_box_plot = generate_horizontal_rectangle_plot(ganymede_centred_subimage_reyleights,y_index_center_ganymede_centred_subimage,diameter_ganymede);
